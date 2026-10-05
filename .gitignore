@@ -1,0 +1,22 @@
+# Power BI temporary files and cache
+*.tmp
+*.autopref
+.~
+
+# Excel temporary and lock files
+~$*.xlsx
+~$*.xls
+~$*.xlsm
+
+# Windows OS thumbnails and system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Mac OS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs and local terminal traces
+*.log

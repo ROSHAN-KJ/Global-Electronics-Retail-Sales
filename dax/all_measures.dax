@@ -1,0 +1,107 @@
+DEFINE
+    MEASURE '_Measures'[Total Orders] = DISTINCTCOUNT(Fact_Sales[Order_number])
+    MEASURE '_Measures'[Total Units Sold] = SUM(Fact_Sales[Quantity])
+    MEASURE '_Measures'[Total Revenue] = SUMX(Fact_Sales, Fact_Sales[Quantity] * RELATED(Dim_Product[Unit_price_USD])
+)
+    MEASURE '_Measures'[Total Cost] = SUMX(Fact_Sales, Fact_Sales[Quantity] * RELATED(Dim_Product[Unit_cost_USD])
+)
+    MEASURE '_Measures'[Total Gross Profit] = [Total Revenue] - [Total Cost]
+    MEASURE '_Measures'[Gross Profit Margin %] = DIVIDE([Total Gross Profit], [Total Revenue], 0)
+    MEASURE '_Measures'[Average Order Value (AOV)] = DIVIDE([Total Revenue], [Total Orders], 0)
+    MEASURE '_Measures'[Revenue LY] = CALCULATE(
+    [Total Revenue],
+    SAMEPERIODLASTYEAR(Dim_Calendar[Date])
+)
+    MEASURE '_Measures'[YoY Revenue Growth $] = [Total Revenue] - [Revenue LY]
+    MEASURE '_Measures'[YoY Revenue Growth %] = DIVIDE([YoY Revenue Growth $], [Revenue LY], 0)
+    MEASURE '_Measures'[Cumultative Running Revenue] = VAR MaxOrderDate = MAX(Dim_Calendar[Date])
+RETURN
+    CALCULATE(
+        [Total Revenue],
+        FILTER(
+            ALL(Dim_Calendar[Date]),
+            Dim_Calendar[Date] <= MaxOrderDate
+        )
+    )
+    MEASURE '_Measures'[Cumultative Running Profit] = VAR MaxOrderDate = MAX(Dim_Calendar[Date])
+RETURN
+    CALCULATE(
+        [Total Gross Profit],
+        FILTER(
+            ALL(Dim_Calendar[Date]),
+            Dim_Calendar[Date] <= MaxOrderDate
+        )
+    )
+    MEASURE '_Measures'[YTD Revenue] = TOTALYTD([Total Revenue], Dim_Calendar[Date])
+    MEASURE '_Measures'[YTD Profit] = TOTALYTD([Total Gross Profit], Dim_Calendar[Date])
+    MEASURE '_Measures'[Profit LY] = CALCULATE(
+    [Total Gross Profit],
+    SAMEPERIODLASTYEAR(Dim_Calendar[Date])
+)
+    MEASURE '_Measures'[YoY Profit Growth %] = VAR ProfitVariance = [Total Gross Profit] - [Profit LY]
+RETURN
+    DIVIDE(ProfitVariance, [Profit LY], BLANK())
+    MEASURE '_Measures'[Total Customers Active] = DISTINCTCOUNT(Fact_Sales[Customerkey])
+    MEASURE '_Measures'[Revenue Per Customer] = DIVIDE([Total Revenue], [Total Customers Active], 0)
+    MEASURE '_Measures'[Profit Per customer] = DIVIDE([Total Gross Profit], [Total Customers Active], 0)
+    MEASURE '_Measures'[Store Square Meters Total] = CALCULATE(
+    SUM(Dim_Store[Square_meters]),
+    Dim_Store[Storekey] <> 0
+)
+    MEASURE '_Measures'[Revenue per m²] = DIVIDE(
+    CALCULATE([Total Revenue], Dim_Store[Storekey] <> 0),
+    [Store Square Meters Total],
+    BLANK()
+)
+    MEASURE '_Measures'[Profit per m²] = DIVIDE(
+    CALCULATE([Total Gross Profit], Dim_Store[Storekey] <> 0),
+    [Store Square Meters Total],
+    BLANK()
+)
+    MEASURE '_Measures'[Total Products] = COUNT(Dim_Product[Productkey])
+    MEASURE '_Measures'[Top Category by Revenue Callout] = VAR TopCat = 
+    CALCULATE(SELECTEDVALUE(Dim_Product[Category]),
+    TOPN(1, VALUES(Dim_Product[Category]), [Total Revenue], DESC)
+    )
+    VAR TopRev = 
+    CALCULATE(
+        [Total Revenue],
+        Dim_Product[Category] = TopCat
+    )
+ RETURN
+ TopCat & " (" & FORMAT(TopRev, "$#,##0.0,M") & ")"
+    MEASURE '_Measures'[Avg Orders per Customer] = DIVIDE([Total Orders], [Total Customers Active], 0)
+    MEASURE '_Measures'[Physical Stores Active] = CALCULATE(
+    DISTINCTCOUNT(Dim_Store[Storekey]),
+    Dim_Store[Storekey] <> 0
+)
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "Total Orders", [Total Orders],
+        "Total Units Sold", [Total Units Sold],
+        "Total Revenue", [Total Revenue],
+        "Total Cost", [Total Cost],
+        "Total Gross Profit", [Total Gross Profit],
+        "Gross Profit Margin %", [Gross Profit Margin %],
+        "Average Order Value (AOV)", [Average Order Value (AOV)],
+        "Revenue LY", [Revenue LY],
+        "YoY Revenue Growth $", [YoY Revenue Growth $],
+        "YoY Revenue Growth %", [YoY Revenue Growth %],
+        "Cumultative Running Revenue", [Cumultative Running Revenue],
+        "Cumultative Running Profit", [Cumultative Running Profit],
+        "YTD Revenue", [YTD Revenue],
+        "YTD Profit", [YTD Profit],
+        "Profit LY", [Profit LY],
+        "YoY Profit Growth %", [YoY Profit Growth %],
+        "Total Customers Active", [Total Customers Active],
+        "Revenue Per Customer", [Revenue Per Customer],
+        "Profit Per customer", [Profit Per customer],
+        "Store Square Meters Total", [Store Square Meters Total],
+        "Revenue per m²", [Revenue per m²],
+        "Profit per m²", [Profit per m²],
+        "Total Products", [Total Products],
+        "Top Category by Revenue Callout", [Top Category by Revenue Callout],
+        "Avg Orders per Customer", [Avg Orders per Customer],
+        "Physical Stores Active", [Physical Stores Active]
+    )
